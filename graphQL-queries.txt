@@ -1,0 +1,173 @@
+{
+  search(field: "name.last", query: "Adams", sort: "name.first", direction: 1) {
+    name {
+      first
+      last
+    }
+    dob
+    phone
+    cell
+    email
+    registered
+    major
+    gpa
+    modified
+    modifiedby
+  }
+}
+
+{
+  search(field: "name.last", query: "^(A|a)", sort: "name.last", direction: 1) {
+    name {
+      first
+      last
+    }
+    dob
+    phone
+    cell
+    email
+    registered
+    major
+    gpa
+    modified
+    modifiedby
+  }
+}
+
+{
+  allStudents {
+    name {
+      first
+      last
+    }
+    dob
+    phone
+    cell
+    email
+    registered
+    major
+    gpa
+    modified
+    modifiedby
+  }
+}
+
+{
+  student(sid: "f01daca1-95a9-40b5-a4d5-ee1c344051f3") {
+    name {
+      first
+      last
+    }
+    location {
+      street
+      city
+      state
+      postcode
+    }
+    picture {
+      large
+    }
+    dob
+    phone
+    cell
+    email
+    registered
+    major
+    gpa
+    modified
+    modifiedby
+    sid
+  }
+}
+
+mutation {
+  deleteStudent(input: {
+    sid: "a19c8219-df19-4db3-a8e2-c94cca11494b"
+  }) {
+    ok
+    error
+  }
+}
+
+mutation {
+  addStudent(input:{
+    name: {
+      first: "Wayne"
+      last: "Patterson"
+    }
+    location: {
+      street: "14195 Autumn Woods"
+      city: "Carmel"
+      state: "IN"
+      postcode: "46074"
+    }
+    email: "suprsidr@gmail.com"
+    phone: "(217)898-6057"
+    cell: "(217)898-6057"
+    picture: {
+      large: "/men/89.jpg"
+    }
+    gpa: "3.0"
+    major: "Computer Science"
+    dob: "01-08-1967"
+    modifiedby: "Dr. Burbalm"
+  }) {
+    name {
+      first
+      last
+    }
+    location {
+      street
+      city
+      state
+      postcode
+    }
+    picture {
+      large
+    }
+    dob
+    phone
+    cell
+    email
+    registered
+    major
+    gpa
+    modified
+    modifiedby
+  }
+}
+
+mutation {
+  updateStudent(input:{
+    sid: "87f9d25d-085c-4f95-b14b-0bfaa116ce03"
+    name: {
+      first: "Wayne"
+      last: "Patterson"
+    }
+    modifiedby: "Michelle Obama"
+  }) {
+    name {
+      first
+      last
+    }
+    location {
+      street
+      city
+      state
+      postcode
+    }
+    picture {
+      large
+    }
+    dob
+    sid
+    phone
+    cell
+    email
+    registered
+    major
+    gpa
+    modified
+    modifiedby
+  }
+}
