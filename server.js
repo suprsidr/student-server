@@ -1,5 +1,5 @@
 import express from 'express';
-import { graphqlExpress, graphiqlExpress } from 'apollo-server-express';
+const { ApolloServer } = require('apollo-server-express');
 import bodyParser from 'body-parser';
 import schema from './data/schema';
 import compression from 'compression';
@@ -7,16 +7,19 @@ import cors from 'cors';
 
 const GRAPHQL_PORT = 8080;
 
-const graphQLServer = express();
+const server = new ApolloServer(schema);
 
-graphQLServer.use(compression());
-graphQLServer.use(cors());
+const app = express();
 
-graphQLServer.use('/graphql', bodyParser.json(), graphqlExpress({ schema }));
-graphQLServer.use('/graphiql', graphiqlExpress({ endpointURL: '/graphql' }));
+app.use(compression());
+app.use(cors());
 
-graphQLServer.listen(GRAPHQL_PORT, () =>
-  console.log(
-    `GraphiQL is now running on http://localhost:${GRAPHQL_PORT}/graphiql`
-  )
+
+server.applyMiddleware({ app });
+
+// graphQLServer.use('/graphql', bodyParser.json(), graphqlExpress({ schema }));
+// graphQLServer.use('/graphiql', graphiqlExpress({ endpointURL: '/graphql' }));
+
+app.listen({ port: GRAPHQL_PORT }, () =>
+  console.log(`🚀 Server ready at http://localhost:${GRAPHQL_PORT}${server.graphqlPath}`)
 );

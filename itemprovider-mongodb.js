@@ -7,20 +7,18 @@ const MongoClient = require('mongodb').MongoClient;
 const ItemProvider = function() {};
 
 // Connection URL
-const url = `mongodb://${C.host}:${C.port}/${C.name}`;
-
-// Create a new MongoClient
-const client = new MongoClient(url);
+const url = `mongodb://localhost`;
 
 // Open connection to DB server
 ItemProvider.prototype.open = function(cb) {
-  MongoClient.connect(url, (err, db) => {
-    if(err) {
+  MongoClient.connect(url, { useUnifiedTopology: true }, (err, client) => {
+    if (err) {
       cb(err);
     } else {
+      const db = client.db(C.name);
       console.log(db);
       this.db = db;
-      cb();
+      cb(null, err);
     }
   });
 };

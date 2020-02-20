@@ -1,8 +1,8 @@
 import { makeExecutableSchema, addMockFunctionsToSchema } from 'graphql-tools';
+const { gql } = require('apollo-server-express');
 import resolvers from './resolvers';
-//import mocks from "./mocks";
 
-const typeDefs = `
+const typeDefs = gql`
 type Query {
   student(sid: ID): Student
   allStudents: [Student]
@@ -78,7 +78,7 @@ type Location {
 }
 `;
 
-const schema = makeExecutableSchema({ typeDefs, resolvers });
+const schema = { typeDefs, resolvers };
 
 // addMockFunctionsToSchema({ schema, mocks });
 
