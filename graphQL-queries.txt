@@ -85,7 +85,7 @@ mutation {
     sid: "a19c8219-df19-4db3-a8e2-c94cca11494b"
   }) {
     ok
-    error
+    deletedCount
   }
 }
 
