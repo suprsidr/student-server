@@ -9,6 +9,8 @@ const ItemProvider = function() {};
 // Connection URL
 const url = `mongodb://localhost`;
 
+const errorResponse = { ok: false, error: 'Oops something went wrong!' };
+
 // Open connection to DB server
 ItemProvider.prototype.open = function(cb) {
   MongoClient.connect(url, { useUnifiedTopology: true }, (err, client) => {
@@ -16,7 +18,6 @@ ItemProvider.prototype.open = function(cb) {
       cb(err);
     } else {
       const db = client.db(C.name);
-      console.log(db);
       this.db = db;
       cb(null, err);
     }
@@ -24,12 +25,12 @@ ItemProvider.prototype.open = function(cb) {
 };
 
 // find items in collection
-ItemProvider.prototype.findItems = function(o) {
+ItemProvider.prototype.findItems = function ({ collection, query, limit, sort, fields }) {
+  const coll = this.db.collection(collection);
   return new Promise((resolve, reject) => {
-    const collection = this.db.collection(o.collection);
-    collection.find(o.query, o.fields).sort(o.sort || { _id: -1 }).limit(o.limit || 0).toArray((err, results) =>{
+    coll.find(query).project(fields).sort(sort || { _id: -1 }).limit(limit || 0).toArray((err, results) =>{
       if (err) {
-        reject(err);
+        reject(errorResponse);
       } else {
         resolve(results);
       }
@@ -39,12 +40,12 @@ ItemProvider.prototype.findItems = function(o) {
 };
 
 // find single item
-ItemProvider.prototype.findOne = function(o) {
+ItemProvider.prototype.findOne = function ({ collection, query }) {
+  const coll = this.db.collection(collection);
   return new Promise((resolve, reject) => {
-    const collection = this.db.collection(o.collection);
-    collection.find(o.query).limit(1).toArray((err, results) => {
+    coll.find(query).limit(1).toArray((err, results) => {
       if (err) {
-        reject(err);
+        reject(errorResponse);
       } else {
         resolve(results[0]);
       }
@@ -53,64 +54,41 @@ ItemProvider.prototype.findOne = function(o) {
 };
 
 // save item or items
-ItemProvider.prototype.save = function(o, items) {
-  return new Promise((resolve, reject) => {
-    const collection = this.db.collection(o.collection);
-
-  })
-
-    this.getCollection(o.collection || 'items', function(error, collection) {
-      if( error ) callback(error)
-      else {
-        if( typeof(items.length)=="undefined") {
-          items = [items];
-        }
-        /*for( var i =0;i< items.length;i++ ) {
-          item = items[i];
-          item.ratings = {};
-          item.created_at = new Date();
-        }*/
-        collection.insert(items, function() {
-          callback(null, items);
-        });
+ItemProvider.prototype.saveItem = function ({ collection, student }) {
+  const coll = this.db.collection(collection);
+  return coll.insertOne(student)
+    .then(({ result }) => {
+      if (result.ok && result.nModified > 0) {
+        return this.findOne({ collection, query: { sid: student.sid }})
+      } else {
+        return errorResponse;
       }
-    });
+    })
+    .catch(() => errorResponse)
 };
 
 // update item or items
-ItemProvider.prototype.updateItem = function(o) {
-  return new Promise((resolve, reject) => {
-    const collection = this.db.collection(o.collection);
-    col.updateOne(o.query, o.action, function (err, result) {
-      if (err) {
-        reject(err);
-      } else if (result.matchedCount === 0 || result.modifiedCount === 0) {
-        resolve({'error': 'not found'});
+ItemProvider.prototype.updateItem = function({ collection, query, action }) {
+  const coll = this.db.collection(collection);
+  return coll.updateOne(
+      query,
+      action
+    ).then(({ result }) => {
+      if(result.ok && result.nModified > 0) {
+        return this.findOne({ collection, query })
       } else {
-        collection.find(o.query).limit(1).toArray((err, results) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(results[0]);
-          }
-        });
+        return errorResponse;
       }
-    });
-  });
+    })
+    .catch(() => errorResponse)
 };
 
 // delete item or items
-ItemProvider.prototype.deleteItem = function(o) {
-  return new Promise((resolve, reject) => {
-    const collection = this.db.collection(o.collection);
-    collection.deleteOne(o.query, (err, r) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve({ ok: r.result.ok, deletedCount: r.deletedCount });
-      }
-    })
-  });
+ItemProvider.prototype.deleteItem = function ({ collection, query }) {
+  const coll = this.db.collection(collection);
+  return coll.deleteOne(query)
+    .then(res => res)
+    .catch(() => errorResponse);
 }
 
 exports.ItemProvider = ItemProvider;

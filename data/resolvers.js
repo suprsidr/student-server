@@ -3,16 +3,14 @@ import uuid from 'uuid';
 const ItemProvider = require("../itemprovider-mongodb").ItemProvider;
 const itemProvider = new ItemProvider();
 
-itemProvider.open(function (err) { console.log(err) });
-
-const errorResponse = { ok: false, error: 'Oops something went wrong!' };
+itemProvider.open(function (err, db) { console.log(err, db) });
 
 const resolvers = {
   Query: {
-    student(_, args) {
+    student(_, { sid }, context, info) {
       return itemProvider.findOne({
         collection: "students",
-        query: { sid: args.sid },
+        query: { sid: sid },
         limit: 0,
         sort: {},
         fields: {}
@@ -20,18 +18,23 @@ const resolvers = {
     },
     allStudents() {
       return itemProvider.findItems(
-          {
-            collection: "students",
-            query: {},
-            limit: 0,
-            sort: {},
-            fields: {}
-          })
+        {
+          collection: "students",
+          query: {},
+          limit: 0,
+          sort: {},
+          fields: {}
+        })
     },
     search(_, { field, query, sort, direction = 1 }) {
-      return Students.find({ [field]: { $regex: query } })
-        .sort({ [sort]: direction })
-        .then(students => students);
+      return itemProvider.findItems(
+        {
+          collection: "students",
+          query: { [field]: { $regex: query } },
+          limit: 0,
+          sort: { [sort]: direction },
+          fields: {}
+        });
     }
   },
   Mutation: {
@@ -40,20 +43,22 @@ const resolvers = {
       student.sid = uuid.v4();
       student.modified = student.registered = Date.now();
       student.dob = new Date(student.dob);
-
-      return Students.create(student).then(result => result);
+      return itemProvider.saveItem({
+        collection: 'students',
+        student
+      });
     },
     updateStudent(_, { input: student }) {
       student.modified = Date.now();
-      return Students.findOneAndUpdate(
-        { sid: student.sid },
-        { $set: student },
-        { new: true }
-      ).then(result => result);
+      return itemProvider.updateItem({
+        collection: 'students',
+        query: { sid: student.sid },
+        action: { $set: student }
+      });
     },
     deleteStudent(_, { input: { sid } }) {
       return itemProvider.deleteItem({
-        collection: "students",
+        collection: 'students',
         query: { sid: sid }
       });
     }
