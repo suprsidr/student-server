@@ -7,7 +7,7 @@ const MongoClient = require('mongodb').MongoClient;
 const ItemProvider = function() {};
 
 // Connection URL
-const url = `mongodb://localhost`;
+const url = C.host;
 
 const errorResponse = { ok: false, error: 'Oops something went wrong!' };
 
@@ -19,7 +19,7 @@ ItemProvider.prototype.open = function(cb) {
     } else {
       const db = client.db(C.name);
       this.db = db;
-      cb(null, err);
+      cb(null, db);
     }
   });
 };

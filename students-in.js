@@ -4,7 +4,6 @@
  */
 var ItemProvider = require('./itemprovider-mongodb').ItemProvider,
     itemProvider = new ItemProvider(),
-    merge = require('merge'),
     uuid = require('uuid'),
     data = require('./students').results;
 
@@ -43,57 +42,27 @@ function saveToDb() {
 	data[i].location.state = capitalizeAll(data[i].location.state);
   delete data[i].picture.thumbnail;
   delete data[i].picture.medium;
-  // remove redundant image url
-  /*['large', 'medium', 'thumbnail'].forEach(function(size) {
-    data[i].picture[size] = data[i].picture[size].replace('https://randomuser.me/api/portraits', '')
-  })*/
 
-  itemProvider.findOne({collection: 'students', query: {sid: data[i].sid}}, function(err, item) {
-    if(err){
-      console.log(err);
-      return i<data.length-1?(i++,void saveToDb()):void process.exit();
-    }
-    if(item === null) {
-      itemProvider.save({collection: 'students'}, data[i], function(err, obj) {
-        if(err) console.log(err, data[i]);
-        console.log('saved: ' + data[i].sid, i + '/' + l);
-        return i<data.length-1?(i++,void saveToDb()):void process.exit();
-      });
-    } else {
-      // document exists, lets update it.
-      var merged = merge.recursive(true, item, data[i]);
-      delete merged._id;
-      itemProvider.updateItem(
-        {
-          collection: 'students',
-          query: {
-            sid: data[i].sid
-          },
-          action: {
-            '$set' : merged
-          }
-        }, function(err, obj) {
-        if(err) console.log(err, data[i]);
-        console.log('updated: ' + data[i].sid, i + '/' + l);
-        return i<data.length-1?(i++,void saveToDb()):void process.exit();
-      });
-    }
-  });
+  itemProvider.saveItem({ collection: 'students', student: data[i] })
+    .then(res => {
+      console.log('saved: ' + data[i].sid, i + '/' + l);
+      return i < data.length - 1 ? (i++ , void saveToDb()) : void process.exit();
+    });
 }
 
 // open DB -> insert items into DB
-itemProvider.open(function(){
-  itemProvider.getCollection('students', function(err, collection) {
-    if(err) {
+itemProvider.open(function(err, db){
+  console.log('db: ', db);
+  if (err) {
+    console.log(err);
+    return;
+  }
+  const coll = db.collection('students');
+  coll.createIndex({ sid: 1 }, function (err) {
+    if (err) {
       console.log(err);
       return;
     }
-    collection.createIndex( { sid: 1 }, function(err) {
-      if(err) {
-        console.log(err);
-        return;
-      }
-      saveToDb();
-    } )
+    saveToDb();
   });
 });
